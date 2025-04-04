@@ -295,15 +295,24 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # 시작 상태를 정의해야함
+        start_point = self.startingPosition
+        visited = tuple()
+        state = (start_point, visited)
+        return state
 
     def isGoalState(self, state: Any):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # 종료 조건: 코너 네 가지를 모두 돌았으면 끝!
+        # 코너를 돌았다는 것을 파악하기 위한 방문처리 변수가 필요
+        current_point, visited = state
+        if len(visited) == 4:
+            return True
+        else:
+            return False        
 
     def getSuccessors(self, state: Any):
         """
@@ -315,8 +324,9 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
+        current_point, visited = state
         successors = []
+
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
@@ -324,8 +334,26 @@ class CornersProblem(search.SearchProblem):
             #   dx, dy = Actions.directionToVector(action)
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
+            x, y = current_point
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
 
-            "*** YOUR CODE HERE ***"
+            # 벽이라면 건너 뜀
+            if self.walls[nextx][nexty]:
+                continue
+            
+            # 다음에 갈 수 있는 곳이 corners에 속하고 방문한 적 있는지를 판별
+            if (nextx, nexty) in self.corners and (nextx, nexty) not in visited:
+                # ,가 있어야 하나인 원소임!! -> 파이썬 공부하자,,,
+                new_visited = visited + ((nextx, nexty),)
+            # 그 외라면 다시 visited를 유지
+            else :
+                new_visited = visited
+            
+            # new_point를 만든 뒤 이를 다시 successors에 추가해줌
+            new_point = ((nextx, nexty), new_visited)
+            # 1은 기본 cost로 설정
+            successors.append((new_point, action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors

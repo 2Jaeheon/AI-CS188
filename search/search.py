@@ -101,7 +101,7 @@ def generalSearch(problem, frontier, heuristic=nullHeuristic):
     # frontier가 빌 때까지 반복
     while not frontier.isEmpty():
         current_point, path = frontier.pop()
-
+        
         # 종료 조건
         if problem.isGoalState(current_point):
             return path
