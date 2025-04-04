@@ -345,15 +345,15 @@ class CornersProblem(search.SearchProblem):
             # 다음에 갈 수 있는 곳이 corners에 속하고 방문한 적 있는지를 판별
             if (nextx, nexty) in self.corners and (nextx, nexty) not in visited:
                 # ,가 있어야 하나인 원소임!! -> 파이썬 공부하자,,,
-                new_visited = visited + ((nextx, nexty),)
+                new_visited = visited + ((nextx, nexty), )
             # 그 외라면 다시 visited를 유지
             else :
                 new_visited = visited
             
-            # new_point를 만든 뒤 이를 다시 successors에 추가해줌
-            new_point = ((nextx, nexty), new_visited)
+            # new_state를 만든 뒤 이를 다시 successors에 추가해줌
+            new_state = ((nextx, nexty), new_visited)
             # 1은 기본 cost로 설정
-            successors.append((new_point, action, 1))
+            successors.append((new_state, action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
