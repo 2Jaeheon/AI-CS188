@@ -347,7 +347,7 @@ class CornersProblem(search.SearchProblem):
                 # ,가 있어야 하나인 원소임!! -> 파이썬 공부하자,,,
                 new_visited = visited + ((nextx, nexty), )
             # 그 외라면 다시 visited를 유지
-            else :
+            else:
                 new_visited = visited
             
             # new_state를 만든 뒤 이를 다시 successors에 추가해줌
@@ -371,7 +371,12 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
+# 휴리스틱은 탐색 상태를 입력받아 가장 가까운 목표에 대한 비용을 추정한 숫자를 예측하는 함수
+# 효과적인 휴리스틱일수록 더 가까운 비용을 예측함.
 
+# 팩맨이 현재 위치에서 아직 방문 이전인 코너 중에서 가장 가까운 코너의 거리
+# 더해서 거기서부터 남은 모든 코너를 방문하는 최소비용을 추정해야함.
+# 즉, 휴리스틱은 현재 어디에 존재하든, 최단거리로 모든 모든 코너를 방문하는데 최소 얼마가 걸리느냐? 를 정하는 함수
 def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -387,9 +392,71 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    
+    # 여기에 코드 구현
+    current_point, visited = state
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    # 아직 방문하지 않은 위치를 구해야함
+    not_visited = []
+    for corner in problem.corners:
+        # 만약 visited에 존재하지 않으면 추가
+        if corner not in visited:
+            not_visited.append(corner)
+    
+    # 만약 모든 코너를 방문했다면 거리가 0
+    if len(not_visited) == 0:
+        return 0
+    
+    # 가장 가까운 방문 안 한 노드로 가야함
+    shortest_distance = 100000000
+    for corner in not_visited:
+        distance = util.manhattanDistance(current_point, corner)
+        if distance < shortest_distance:
+            shortest_distance = distance
+
+    # Minimum Spanning Tree를 활용한 계산
+    # MST는 그래프의 모든 정점을 사이클 없이 연결하면서,
+    # 총 간선 길이 합이 가장 작도록 만드는 트리
+    
+    # 1. 코너중 하나를 선택
+    # 2. 선택 노드를 기준으로 연결되지 못한 노드들과의 거리를 계산
+    # 3. 가장 가까운 걸 추가
+    # 4. 모든 코너가 MST에 연결될 때까지 iteration
+
+    # 팩맨을 기준으로 탐색하는 것이 아닌
+    # 그래프의 코너를 기준으로 가장 짧은 길을 탐색
+    mst_cost = 0
+    visited_nodes = []
+    unvisited_nodes = not_visited.copy()
+
+    current = unvisited_nodes.pop()
+    visited_nodes.append(current)
+
+    while not len(unvisited_nodes) == 0:
+        shortest_edge = 100000000
+        closest_corner = None
+        
+        # 방문한 노드 선택
+        for i in visited_nodes:
+            # 아직 방문하지 않은 노드 중 가장 가까운 거리를 통해서 갱신
+            for j in unvisited_nodes:
+                distance = util.manhattanDistance(i, j)
+                
+                if distance < shortest_edge:
+                    shortest_edge = distance
+                    closest_corner = j
+        
+        # 가장 짧은 간선을 mst에 추가
+        mst_cost += shortest_edge
+        # 새로 연결된 corner를 MST에 추가 
+        visited_nodes.append(closest_corner)
+        # unvisited_nodes에서 제거해서 더이상 고려하지 않도록 함
+        unvisited_nodes.remove(closest_corner)
+    
+    # 팩맨은 현재 위치를 기준으로 가장 가까운 코너를 가야함.
+    # 코너로부터 MST 거리를 계산하여 합한 것이 곧 휴리스틱임.
+    heuristic = shortest_distance + mst_cost
+    return heuristic
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
