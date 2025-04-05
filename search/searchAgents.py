@@ -425,6 +425,8 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
 
     # 팩맨을 기준으로 탐색하는 것이 아닌
     # 그래프의 코너를 기준으로 가장 짧은 길을 탐색
+    # corner의 개수가 4개이기 때문에 brute-force 기반의 MST로 충분히 빠름
+    # 개수가 많아진다면 Priority Queue를 쓰는것이 좋음.
     mst_cost = 0
     visited_nodes = []
     unvisited_nodes = not_visited.copy()
