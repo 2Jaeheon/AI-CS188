@@ -550,9 +550,75 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    cur_position, foodGrid = state
+    # 남아있는 모든 음식을 먹을 수 있는 최적의 휴리스틱을 만들어야함.
+    # 즉, 최소한으로 얼마나 움직이는가 -> 하나의 숫자로 반환해야함
+    # consistent하도록 설계하면 됨
+    food_list = foodGrid.asList()
+    # 모두 먹었으면 종료
+    if len(food_list) == 0:
+        return 0
+    
+    # # 현재 위치를 기준으로 가장 가까운 먹이를 구함
+    # shortest_distance = 1000000000000
+    # for food in food_list:
+    #     distance = mazeDistance(cur_position, food, problem.startingGameState)
+    #     if distance < shortest_distance:
+    #         shortest_distance = distance
+    # 이 방법은 너무 탐색을 많이함
+
+    # 가장 멀리 있는 음식은 무조건 가야함.
+    # 따라서 maze_distance를 이용해서 가장 멀리있는 길을 우선 진행함.
+    # 음식까지의 최소경로를 사용하면 h 값이 작아져서 너무 낙관적으로 탐색함.
+    # 따라서 최대한 멀리있는 길을 최소한의 비용으로 진행한다음
+    # 그 이후부터 MST를 사용해서 진행한다면 node를 최소한으로 확장 가능함.
+
+    if 'cache' not in problem.heuristicInfo:
+        cache = problem.heuristicInfo['cache'] = {}
+    cache = problem.heuristicInfo['cache']
+
+    max_distance = 0
+    for food in food_list:
+        key = tuple(sorted((cur_position, food)))
+        
+        if key not in cache:
+            cache[key] = mazeDistance(cur_position, food, problem.startingGameState)
+        max_distance = max(max_distance, cache[key])
+
+    # MST 알고리즘을 사용해서 경로를 구함
+    mst_cost = 0
+    priority_queue = util.PriorityQueue()
+    visited = set()
+
+    start_food = food_list[0]
+    visited.add(start_food)
+
+    # 선택 지점으로부터 나머지 food로 가는 경로를 priority_queue에 모두 추가
+    
+    for food in foodGrid.asList():
+        if food != start_food:
+            distance = util.manhattanDistance(start_food, food)
+            priority_queue.push((start_food, food), distance)
+    
+    # Prim 알고리즘을 기반으로 한 MST
+    while not priority_queue.isEmpty() and len(visited) < len(food_list):
+        current_node, destination_node = priority_queue.pop()
+
+        # 이미 방문한 노드라면 pass
+        if current_node in visited:
+            continue
+        
+        # 방문하지 않았으니 우선 방문 처리
+        visited.add(destination_node)
+        mst_cost += util.manhattanDistance(current_node, destination_node)
+
+        # 새로 연결된 노드에서 아직 방문하지 않은 노드 추가
+        for next_node in food_list:
+            if next_node not in visited:
+                distance = util.manhattanDistance(destination_node, next_node)
+                priority_queue.push((destination_node, next_node),distance)
+
+    return max_distance + mst_cost
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
