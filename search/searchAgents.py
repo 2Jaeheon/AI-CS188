@@ -579,46 +579,13 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
 
     max_distance = 0
     for food in food_list:
-        key = tuple(sorted((cur_position, food)))
+        key = (cur_position, food)
         
         if key not in cache:
             cache[key] = mazeDistance(cur_position, food, problem.startingGameState)
         max_distance = max(max_distance, cache[key])
 
-    # MST 알고리즘을 사용해서 경로를 구함
-    mst_cost = 0
-    priority_queue = util.PriorityQueue()
-    visited = set()
-
-    start_food = food_list[0]
-    visited.add(start_food)
-
-    # 선택 지점으로부터 나머지 food로 가는 경로를 priority_queue에 모두 추가
-    
-    for food in foodGrid.asList():
-        if food != start_food:
-            distance = util.manhattanDistance(start_food, food)
-            priority_queue.push((start_food, food), distance)
-    
-    # Prim 알고리즘을 기반으로 한 MST
-    while not priority_queue.isEmpty() and len(visited) < len(food_list):
-        current_node, destination_node = priority_queue.pop()
-
-        # 이미 방문한 노드라면 pass
-        if current_node in visited:
-            continue
-        
-        # 방문하지 않았으니 우선 방문 처리
-        visited.add(destination_node)
-        mst_cost += util.manhattanDistance(current_node, destination_node)
-
-        # 새로 연결된 노드에서 아직 방문하지 않은 노드 추가
-        for next_node in food_list:
-            if next_node not in visited:
-                distance = util.manhattanDistance(destination_node, next_node)
-                priority_queue.push((destination_node, next_node),distance)
-
-    return max_distance + mst_cost
+    return max_distance
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
