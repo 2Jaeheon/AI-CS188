@@ -570,19 +570,24 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     # 가장 멀리 있는 음식은 무조건 가야함.
     # 따라서 maze_distance를 이용해서 가장 멀리있는 길을 우선 진행함.
     # 음식까지의 최소경로를 사용하면 h 값이 작아져서 너무 낙관적으로 탐색함.
-    # 따라서 최대한 멀리있는 길을 최소한의 비용으로 진행한다음
-    # 그 이후부터 MST를 사용해서 진행한다면 node를 최소한으로 확장 가능함.
-
+    # 속도가 너무 느려서 cache 전략을 사용하였음
+    # 그러나 여전히 mediumSearch와 oddSearch는 아예 팩맨이 움직이지 않는 문제가 있음
     if 'cache' not in problem.heuristicInfo:
         cache = problem.heuristicInfo['cache'] = {}
     cache = problem.heuristicInfo['cache']
 
     max_distance = 0
+    # 현재 위치로부터 모든 food 좌표로 mazeDistance를 계산
+    # 가장 멀리있는 음식까지의 거리를 찾아야함
     for food in food_list:
+        # 현재 postion과 food를 key로 설정
         key = (cur_position, food)
         
+        # 캐시에 존재하지 않는 경우에
         if key not in cache:
+            # 캐시에 mazeDistance 추가
             cache[key] = mazeDistance(cur_position, food, problem.startingGameState)
+        # max_distance를 최댓값으로 설정함
         max_distance = max(max_distance, cache[key])
 
     return max_distance
