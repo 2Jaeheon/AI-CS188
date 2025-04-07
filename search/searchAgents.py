@@ -614,8 +614,9 @@ class ClosestDotSearchAgent(SearchAgent):
         Returns a path (a list of actions) to the closest dot, starting from
         gameState.
         """
-        # Here are some useful elements of the startState
+        # 문제를 정의
         problem = AnyFoodSearchProblem(gameState)
+        # BFS를 통해 문제 해결
         return search.bfs(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
