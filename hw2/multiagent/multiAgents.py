@@ -217,8 +217,91 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # "*** YOUR CODE HERE ***"
+        # Helper를 사용해서 재귀적으로 구현 -> 재귀함수를 호출해서 해결하는 형태로 구현
+
+        # 동작 과정
+        # 1. Pacman은 초기에 모든 Actions을 확인하고 Action 하나를 선택
+        # 2. Ghost는 자신의 턴에 Pacman에게 최대한 안 좋은 방향으로 선택
+        # 3. 위 두 과정을 깊이의 제한동안 반복 or 종료까지 반복
+        # 4. 상태를 점수화해서 위로 전파
+        # 5. 팩맨은 가장 높은 점수를 기바으로 Action을 선택
+
+        bestScore = float('-inf')
+        bestAction = None
+
+        # STOP은 리스트에서 삭제하려고 하였으나, 채점결과 정상적으로 점수가 나오지 않음
+        # legalActions = gameState.getLegalActions(0)
+        # actions = []
+        # for action in legalActions:
+        #     if action != Directions.STOP:
+        #         actions.append(action)
+
+        for action in gameState.getLegalActions(0):
+            # 여기서 한 번 움직이게 되는 것
+            successor = gameState.generateSuccessor(0, action)
+            # 따라서 agent 를 1부터 시작해야 정상적으로 작동함.
+            score = self.minimax(successor, agent = 1, depth = 0)
+
+            if (score >bestScore):
+                bestScore = score
+                bestAction = action
+                
+        return bestAction
+
+    def minimax(self, state, agent, depth):
+        # 종료 조건일 시에는 상태에 관한 평가를 해서 점수를 반환해줌.
+        if depth == self.depth or state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        # 문어발처럼 쭉 뻗어나가야함.
+        # 따라서 maxEvalute와 minEvaluate에서 계속해서 minimax를 수행하고
+        # 팩맨과 Ghost의 각 상태에서(각 입장에서) 가장 최선의 선택을 하도록 함.
+        # 여기서 종료조건이 만나면 바로 종료해서 getAction으로 전달
+
+        # 현재 에이전트가 팩맨인 경우에는 maxEvaluate() 호출
+        if agent == 0:
+            return self.maxEvaluate(state, depth)
+        
+        # 현재 에이전트가 Ghost인 경우에는 minEvaluate() 호출
+        else :
+            return self.minEvaluate(state, agent, depth)
+
+    def maxEvaluate(self, state, depth):
+        # 팩맨 차례: 가능한 모든 Action 중 가장 높은 점수를 택해야함.
+        # max값을 계산하는 함수임
+        bestScore = float('-inf')
+
+        for action in state.getLegalActions(0):
+            successor = state.generateSuccessor(0, action)
+            # 모든 action에 대해서 minimax로 재귀를 돌린 뒤
+            # 가장 높은 점수를 반환해줌
+            score = self.minimax(successor, agent = 1, depth = depth)
+            bestScore = max(bestScore, score)
+
+        return bestScore 
+
+    def minEvaluate(self, state, agent, depth):
+        # 유령 차례: 모든 행동중 팩맨에게 가장 불리한 action을 선택
+        bestScore = float('inf')
+        nextAgent = agent + 1
+        nextDepth = depth
+
+        # 모든 유령이 움직였을 때 다시 팩맨 차례가 되어야함
+        if nextAgent == state.getNumAgents():
+            nextAgent = 0
+            nextDepth = depth + 1
+
+        for action in state.getLegalActions(agent):
+            # 각 action에 관해 새로운 상태 생성
+            successor = state.generateSuccessor(agent, action)
+            # 갈 수 있는 모든 방향에 대해서 minimax 수행
+            score = self.minimax(successor, nextAgent, nextDepth)
+            bestScore = min(bestScore, score)
+
+        return bestScore
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
