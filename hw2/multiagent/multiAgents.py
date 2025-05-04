@@ -75,7 +75,7 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-        "*** YOUR CODE HERE ***"
+        # "*** YOUR CODE HERE ***"
         # Best Action일수록 Score가 높은 Evaluation Function을 작성하는 것이 목표
         
         # 평가 기준
@@ -84,6 +84,7 @@ class ReflexAgent(Agent):
         # - 팩맨과 캡슐과의 거리 (가까울수록 좋음)
         # - 팩맨과 겁먹은 유령(캡슐 섭취시) 거리 (가까울수록 좋음)
         # - 음식의 개수 (적을수록 좋음)
+        # - 팩맨의 정지
         
         # 1. 팩맨 - 음식 간 거리
         pacmanToFoodDistance = float('inf')
@@ -97,6 +98,7 @@ class ReflexAgent(Agent):
         # 2. 팩맨 - 유령 간 거리
         pacmanToGhostDistance = float('inf')
         ghostNum = len(newGhostStates)
+        # 유령이 여러마리가 존재할 수 있으니까 반복문 사용
         for i in range(ghostNum):
             currentGhost = newGhostStates[i]
             ghostPosition = currentGhost.getPosition()
