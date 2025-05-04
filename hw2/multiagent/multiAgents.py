@@ -102,7 +102,11 @@ class ReflexAgent(Agent):
         for i in range(ghostNum):
             currentGhost = newGhostStates[i]
             ghostPosition = currentGhost.getPosition()
-            pacmanToGhostDistance = manhattanDistance(newPos, ghostPosition)
+            distance = manhattanDistance(newPos, ghostPosition)
+            # 바로 manhattanDisatnce로 distance를 갱신하면 모든 유령의 거리가 고려되지 않음. 
+            # 여러마리를 고려해서 조건분기로 수정
+            if distance < pacmanToGhostDistance:
+                pacmanToGhostDistance = distance
 
         
         # 3. 팩맨 - 캡슐 간 거리
