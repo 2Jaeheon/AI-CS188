@@ -68,14 +68,90 @@ class ReflexAgent(Agent):
         to create a masterful evaluation function.
         """
         # Useful information you can extract from a GameState (pacman.py)
+        # successorGameState - 상태를 제공, 이거로부터 필요한 정보들을 추출함.
         successorGameState = currentGameState.generatePacmanSuccessor(action)
+        
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        # Best Action일수록 Score가 높은 Evaluation Function을 작성하는 것이 목표
+        
+        # 평가 기준
+        # - 팩맨과 음식과의 거리 (가까울수록 좋음)
+        # - 팩맨과 유령과의 거리 (멀수록 좋음)
+        # - 팩맨과 캡슐과의 거리 (가까울수록 좋음)
+        # - 팩맨과 겁먹은 유령(캡슐 섭취시) 거리 (가까울수록 좋음)
+        # - 음식의 개수 (적을수록 좋음)
+        
+        # 1. 팩맨 - 음식 간 거리
+        pacmanToFoodDistance = float('inf')
+        newFoodList = newFood.asList()
+        n = len(newFoodList)
+        for i in range(n):
+            distance = manhattanDistance(newPos, newFoodList[i])
+            if distance < pacmanToFoodDistance:
+                pacmanToFoodDistance = distance
+
+        # 2. 팩맨 - 유령 간 거리
+        pacmanToGhostDistance = float('inf')
+        ghostNum = len(newGhostStates)
+        for i in range(ghostNum):
+            currentGhost = newGhostStates[i]
+            ghostPosition = currentGhost.getPosition()
+            pacmanToGhostDistance = manhattanDistance(newPos, ghostPosition)
+
+        
+        # 3. 팩맨 - 캡슐 간 거리
+        pacmanToCapsuleDistance = float('inf')
+        capsules = successorGameState.getCapsules()
+        if len(capsules) > 0:
+            for capsulePosition in capsules:
+                distance = manhattanDistance(newPos, capsulePosition)
+
+                if(distance < pacmanToCapsuleDistance):
+                    pacmanToCapsuleDistance = distance
+        
+        # 4. scared Ghost 간의 거리
+        pacmanToScaredGhostDistance = float('inf')
+
+        for ghost in newGhostStates:
+            if ghost.scaredTimer > 0:
+                ghostPosition = ghost.getPosition()
+                distance = manhattanDistance(newPos, ghostPosition)
+                
+                if distance < pacmanToScaredGhostDistance:
+                    pacmanToScaredGhostDistance = distance
+
+        # 5. 음식 개수
+        foodCount = len(newFoodList)
+
+
+        # 점수 계산
+        score = 0
+
+        if pacmanToFoodDistance != float('inf'):
+            score += 10 / (pacmanToFoodDistance + 1)
+
+        if pacmanToGhostDistance <= 1:
+            score -= 500
+        else :
+            score -= 3 / (pacmanToGhostDistance + 1)
+
+        if pacmanToScaredGhostDistance != float('inf'):
+            score += 50 / (pacmanToScaredGhostDistance + 1)
+
+        if pacmanToCapsuleDistance != float('inf'):
+            score += 5 / (pacmanToCapsuleDistance + 1)
+
+        # 멈추는 현상이 발생해서 멈추지 않도록 score를 감소
+        if action == Directions.STOP:
+            score -= 20
+
+        score -= 5 * foodCount
+
+        return score
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
