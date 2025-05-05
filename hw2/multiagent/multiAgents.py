@@ -261,11 +261,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
         # 여기서 종료조건이 만나면 바로 종료해서 getAction으로 전달
 
         # 현재 에이전트가 팩맨인 경우에는 maxEvaluate() 호출
-        if agent == 0:
+        if self.isPacman(agent):
             return self.maxEvaluate(state, depth)
         
         # 현재 에이전트가 Ghost인 경우에는 minEvaluate() 호출
-        else :
+        elif self.isGhost(agent):
             return self.minEvaluate(state, agent, depth)
 
     def maxEvaluate(self, state, depth):
@@ -278,6 +278,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             # 모든 action에 대해서 minimax로 재귀를 돌린 뒤
             # 가장 높은 점수를 반환해줌
             score = self.minimax(successor, agent = 1, depth = depth)
+            # 팩맨은 가장 최적의 수로 움직여야 함
             bestScore = max(bestScore, score)
 
         return bestScore 
@@ -291,17 +292,29 @@ class MinimaxAgent(MultiAgentSearchAgent):
         # 모든 유령이 움직였을 때 다시 팩맨 차례가 되어야함
         if nextAgent == state.getNumAgents():
             nextAgent = 0
-            nextDepth = depth + 1
+            nextDepth += 1 # 다음 depth로 증가
 
         for action in state.getLegalActions(agent):
             # 각 action에 관해 새로운 상태 생성
             successor = state.generateSuccessor(agent, action)
             # 갈 수 있는 모든 방향에 대해서 minimax 수행
             score = self.minimax(successor, nextAgent, nextDepth)
+            # Ghost는 Pacman에게 가장 최악의 수로 움직여야함.
             bestScore = min(bestScore, score)
 
         return bestScore
 
+    def isPacman(self, agent):
+        if agent == 0:
+            return True
+        else :
+            return False
+
+    def isGhost(self, agent):
+        if agent != 0:
+            return True
+        else :
+            return False
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
