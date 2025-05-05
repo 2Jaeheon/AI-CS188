@@ -453,8 +453,78 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #"*** YOUR CODE HERE ***"
+        # Agent는 실제로 Minimax 트리처럼 움직이지 않고,
+        # 확률에 기반해서 움직인다.
+        # 따라서 Agent의 확률적 행동을 모델링 해야함.
+
+        # minimax와 구조는 유사하지만, expectimax는 min대신 expectation을 기반으로 동작한다.
+
+        bestScore = float('-inf')
+        bestAction = None
+
+        for action in gameState.getLegalActions(0):
+            # 여기서 한 번 움직이게 되는 것
+            successor = gameState.generateSuccessor(0, action)
+            # 따라서 agent 를 1부터 시작해야 정상적으로 작동함.
+            score = self.expectimax(successor, agent = 1, depth = 0)
+
+            if (score >bestScore):
+                bestScore = score
+                bestAction = action
+                
+        return bestAction
+
+
+    def expectimax(self, state, agent, depth):
+        if depth == self.depth or state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        if self.isPacman(agent):
+            return self.maxEvaluate(state, agent, depth)
+
+        elif self.isGhost(agent):
+            return self.expectedValueEvalute(state, agent, depth)
+        
+
+    def maxEvaluate(self, state, agent, depth):
+        bestScore = float('-inf')
+
+        for action in state.getLegalActions(0):
+            successor = state.generateSuccessor(0, action)
+
+            score = self.expectimax(successor, agent = 1, depth = depth)
+
+            bestScore = max(bestScore, score)
+
+        return bestScore
+
+    def expectedValueEvalute(self, state, agent, depth):
+        #bestScore = float('inf')
+        nextAgent = agent + 1
+        nextDepth = depth
+        score = 0
+        if nextAgent == state.getNumAgents():
+            nextAgent = 0
+            nextDepth += 1 # 다음 depth로 증가
+
+        for action in state.getLegalActions(agent):
+            successor = state.generateSuccessor(agent, action)
+            score += self.expectimax(successor, nextAgent, nextDepth)
+            
+        return score / len(state.getLegalActions(agent))
+    
+    def isPacman(self, agent):
+        if agent == 0:
+            return True
+        else :
+            return False
+
+    def isGhost(self, agent):
+        if agent != 0:
+            return True
+        else :
+            return False
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
