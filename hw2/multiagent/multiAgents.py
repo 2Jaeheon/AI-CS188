@@ -325,8 +325,120 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # "*** YOUR CODE HERE ***"
+        # 알파-베타 pruning -> 위의 minimax와 유사한 형태
+        # 하지만, maxEvaluate() 함수에서 beta보다 커지면 pruning 해야함
+        # 또한, minEvaluate() 함수에서 alpha보다 작아지면 pruning 해야함
+        # alpha: 팩맨이 확보한 최고점수
+        # beta: ghost가 확보한 최고점수
+
+        # 여기서 구현해야 하는 것은 결국 더 이상 노드를 탐색을 해도 best 값보다 
+        # 더 나은 결과가 나올 수 없다면 그 아래는 탐색하지 않고 pruning 하는 것
+
+        bestScore = float('-inf')
+        bestAction = None
+        alpha = float('-inf')
+        beta = float('inf')
+
+        for action in gameState.getLegalActions(0):
+            # 여기서 한 번 움직이게 되는 것
+            successor = gameState.generateSuccessor(0, action)
+            # 따라서 agent 를 1부터 시작해야 정상적으로 작동함.
+            score = self.minimaxAlphaBetaPruning(successor, agent = 1, depth = 0, alpha = alpha, beta = beta)
+
+            if (score >bestScore):
+                bestScore = score
+                bestAction = action
+            
+            # getAction은 팩맨의 root에서 선택을 결정하는 함수
+            # 여기서는 가장 높은 값을 반환해줘야함.
+            # 행동할 수 있는 모든 action들에 대해서 alpha 값을 갱신을 해주어야
+            # 정확한 pruning이 가능함.
+            alpha = max(alpha, bestScore)
+            # ex) A, B, C의 행동을 하는 것이 가능함.
+            # A의 bestScore 값이 10이었음.
+            # alpha값을 10으로 갱신하고 다음 action인 B에 관해서 alpha가 10일 때를 기준으로 pruning이 진행되어야 함.
+
+        return bestAction
+
+    def minimaxAlphaBetaPruning(self, state, agent, depth, alpha, beta):
+        # 종료 조건일 시에는 상태에 관한 평가를 해서 점수를 반환해줌.
+        if depth == self.depth or state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        # 문어발처럼 쭉 뻗어나가야함.
+        # 따라서 maxEvalute와 minEvaluate에서 계속해서 minimax를 수행하고
+        # 팩맨과 Ghost의 각 상태에서(각 입장에서) 가장 최선의 선택을 하도록 함.
+        # 여기서 종료조건이 만나면 바로 종료해서 getAction으로 전달
+
+        # 현재 에이전트가 팩맨인 경우에는 maxEvaluate() 호출
+        if self.isPacman(agent):
+            return self.maxEvaluate(state, depth, alpha, beta)
+        
+        # 현재 에이전트가 Ghost인 경우에는 minEvaluate() 호출
+        elif self.isGhost(agent):
+            return self.minEvaluate(state, agent, depth, alpha, beta)
+
+    def maxEvaluate(self, state, depth, alpha, beta):
+        # 팩맨 차례: 가능한 모든 Action 중 가장 높은 점수를 택해야함.
+        # max값을 계산하는 함수임
+        bestScore = float('-inf')
+
+        for action in state.getLegalActions(0):
+            successor = state.generateSuccessor(0, action)
+            # 모든 action에 대해서 minimax로 재귀를 돌린 뒤
+            # 가장 높은 점수를 반환해줌
+            score = self.minimaxAlphaBetaPruning(successor, agent = 1, depth = depth, alpha = alpha, beta = beta)
+
+            # 알파베타 프루닝을 시도해야함 (beta보다 커질 때)
+            bestScore = max(bestScore, score)
+            if bestScore > beta: # 여기서 pruning이 진행됨.
+            # bestScore가 beta(유령의 최소값)보다 크다면 그냥 바로 탐색을 안 해도 된다는 뜻
+                return bestScore
+                
+            alpha = max(alpha, bestScore)
+
+        return bestScore 
+
+    def minEvaluate(self, state, agent, depth, alpha, beta):
+        # 유령 차례: 모든 행동중 팩맨에게 가장 불리한 action을 선택
+        bestScore = float('inf')
+        nextAgent = agent + 1
+        nextDepth = depth
+
+        # 모든 유령이 움직였을 때 다시 팩맨 차례가 되어야함
+        if nextAgent == state.getNumAgents():
+            nextAgent = 0
+            nextDepth += 1 # 다음 depth로 증가
+
+        for action in state.getLegalActions(agent):
+            # 각 action에 관해 새로운 상태 생성
+            successor = state.generateSuccessor(agent, action)
+            # 갈 수 있는 모든 방향에 대해서 minimax 수행
+            score = self.minimaxAlphaBetaPruning(successor, nextAgent, nextDepth, alpha, beta)
+            # Ghost는 Pacman에게 가장 최악의 수로 움직여야함.
+            bestScore = min(bestScore, score)
+
+            # 팩맨은 최대값을 원하기 때문에 ghost가 주는 최악의 점수 bestScore가 alpha값보다 작다면
+            # 어차피 팩맨은 아래의 가지들을 모두 탐색하지 않아도 됨
+            if bestScore < alpha:
+                return bestScore
+
+            beta = min(beta, bestScore)
+
+        return bestScore
+
+    def isPacman(self, agent):
+        if agent == 0:
+            return True
+        else :
+            return False
+
+    def isGhost(self, agent):
+        if agent != 0:
+            return True
+        else :
+            return False
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
