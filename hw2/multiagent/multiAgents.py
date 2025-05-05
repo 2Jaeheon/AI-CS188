@@ -542,9 +542,9 @@ def betterEvaluationFunction(currentGameState: GameState):
     # - 남은 음식의 개수
     # - 음식과의 거리
     # - 유령과의 거리
-    # - 유령이 겁먹은 시간
+    # - 겁먹은 유령과의 거리
+    # - 겁먹은 유령의 개수
     # - 캡슐 거리
-    # - 현재 점수
     # - 푸드 클러스터링
     # - 유령과의 안전 거리    
 
