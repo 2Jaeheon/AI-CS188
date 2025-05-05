@@ -533,8 +533,156 @@ def betterEvaluationFunction(currentGameState: GameState):
 
     DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # "*** YOUR CODE HERE ***"
+    # betterEvalutationFunction을 구현해야함.
+    # Question1의 경우에는 (state, aciton)에 관한 것이고
+    # betterEvalutationFunction의 경우에는 state에 관한 것
+
+    # 평가 지표 
+    # - 남은 음식의 개수
+    # - 음식과의 거리
+    # - 유령과의 거리
+    # - 유령이 겁먹은 시간
+    # - 캡슐 거리
+    # - 현재 점수
+    # - 푸드 클러스터링
+    # - 유령과의 안전 거리    
+
+    pacmanPosition = currentGameState.getPacmanPosition()
+    foodsList = currentGameState.getFood().asList()
+    ghosts = currentGameState.getGhostStates()
+    capsules = currentGameState.getCapsules()
+    gameScore = currentGameState.getScore()
+
+    # feature를 뽑아내야 함.
+    # foodDistance 
+    foodDistance = float('inf')
+    if len(foodsList) != 0:
+        for food in foodsList:
+            distance = manhattanDistance(pacmanPosition, food)
+            if distance < foodDistance:
+                foodDistance = distance
+
+    # foodCount
+    foodCount = len(foodsList)    
+
+    # capsuleDistance
+    capsuleDistance = float('inf')
+    if len(capsules) != 0:
+        
+        for capsule in capsules:
+            distance = manhattanDistance(pacmanPosition, capsule)
+
+            if distance < capsuleDistance:
+                capsuleDistance = distance
+
+    # ghostDistance
+    dangerousGhosts = []
+    ghostDistance = float('inf')
+
+    for ghost in ghosts:
+        if ghost.scaredTimer == 0:
+            dangerousGhosts.append(ghost)
+
+    if dangerousGhosts:
+        for ghost in dangerousGhosts:
+            distance = manhattanDistance(pacmanPosition, ghost.getPosition())
+            if distance < ghostDistance:
+                ghostDistance = distance
+    else :
+        ghostDistance = float('inf')
+        
+
+    # scaredGhostCount
+    scaredGhostCount = 0
+    for ghost in ghosts:
+        if ghost.scaredTimer > 0:
+            scaredGhostCount += 1
+
+    # scaredGhostDistance
+    scaredGhosts = []
+    scaredGhostDistance = float('inf')
+    for ghost in ghosts:
+        if ghost.scaredTimer > 0:
+            scaredGhosts.append(ghost)
+    
+    if scaredGhosts:
+        for scaredGhost in scaredGhosts:
+            distance = manhattanDistance(pacmanPosition, scaredGhost.getPosition())
+            if distance < scaredGhostDistance:
+                scaredGhostDistance = distance
+    else :
+        scaredGhostDistance = float('inf')
+
+    # ghostArea
+    # pacman과의 거리가 2 이하
+    ghostArea = 0
+
+    for ghost in ghosts:
+        if ghost.scaredTimer == 0:
+            dangerousGhosts.append(ghost)
+
+    for ghost in dangerousGhosts:
+        distance = manhattanDistance(pacmanPosition, ghost.getPosition())
+        if distance <= 2:
+            ghostArea += 1
+
+    # foodCluster
+    if len(foodsList) == 0:
+        foodCluster = 0
+        averageFoodDistance = 0
+    else :
+        totalDistance = 0
+        count = 0
+
+        for i in range(len(foodsList)):
+            for j in range(i + 1, len(foodsList)):
+                distance = manhattanDistance(foodsList[i], foodsList[j])
+                totalDistance += distance
+                count += 1
+        if count > 0:
+            averageFoodDistance = totalDistance / count 
+        else :
+            averageFoodDistance = 0
+
+    foodCluster = averageFoodDistance
+
+    # Scoring(점수 계산)
+    score = gameScore
+
+    if foodDistance != float('inf'):
+        score += 15 / (foodDistance + 1)
+    
+    # 음식이 적을수록 좋음
+    score -= 5 * foodCount
+
+    # 캡슐이 가까울수록 좋음
+    if capsuleDistance != float('inf'):
+        score += 15 / (capsuleDistance + 1)
+    
+    # 유령과는 거리가 멀수록 좋음
+    if ghostDistance != float('inf'):
+        if ghostDistance <= 1:
+            score -= 300
+        else :
+            score -= 5 / (ghostDistance + 1)
+
+    # 겁먹은 유령은 가까울수록 좋음
+    if scaredGhostDistance != float('inf'):
+        score += 30 / (scaredGhostDistance + 1)
+    
+    # 캡슐을 먹어서 무서워하는 고스트가 많을수록 좋음
+    score += 10 * scaredGhostCount
+    
+    # 고스트의 영역에 가까워지지 않으면 좋음
+    score -= 20 * ghostArea
+    
+    # 푸드 밀집도가 높을수록 좋음
+    # 음식이 멀리 퍼져있다면 탐색효율이 떨어지기 때문에 감점
+    # foodCluster는 작을수록 좋음
+    score -= 1.5 * foodCluster
+
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
