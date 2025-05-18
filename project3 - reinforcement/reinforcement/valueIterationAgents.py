@@ -189,5 +189,90 @@ class PrioritizedSweepingValueIterationAgent(ValueIterationAgent):
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
 
     def runValueIteration(self):
-        "*** YOUR CODE HERE ***"
+        # "*** YOUR CODE HERE ***"
+        # Value Iteration에서 조금 수정된 형태
+        # 당장 갱신할 필요가 있는 거 먼저 갱신하자
 
+        # 어떤 특정 상태 s의 이전 상태들을 저장
+        predecessors = collections.defaultdict(set)
+
+        # 반복해서 next State 입장에서 nextState가 될 수 있는 이전의 상태를 저장함.
+        for state in self.mdp.getStates():
+            for action in self.mdp.getPossibleActions(state):
+                # 행동을 했을 때의 가능한 다음 상태와 확률들을 가지고 옴
+                for nextStep, probability in self.mdp.getTransitionStatesAndProbs(state, action):
+                    # 다음 상태에서 predecessor로 현재 상태를 추가
+                    if probability > 0:
+                        predecessors[nextStep].add(state)
+
+        # 우선순위 큐 생성
+        # 우선순위가 낮은 것들(변화가 클 것으로 예측되는 것)을 먼저 꺼내도록 해야함.
+        priorityQueue = util.PriorityQueue();
+
+        # 각 상태의 Q-Value중 가장 큰 것을 계산하자
+        for state in self.mdp.getStates():
+            if self.mdp.isTerminal(state):
+                continue
+
+            actions = self.mdp.getPossibleActions(state)
+            if not actions:
+                continue
+            
+            maxQValue = float('-inf')
+
+            # 가능한 모든 action에 관한 Q-Value를 계산
+            for action in actions:
+                Q = self.computeQValueFromValues(state, action)
+                if Q > maxQValue:
+                    maxQValue = Q
+
+            # Q-Value를 계산해서 기존의 값과 차이를 계산한 다음 이 차이를 PriorityQueue에 넣음
+            diff = abs(self.values[state] - maxQValue)
+            priorityQueue.update(state, -diff)
+
+        # 주어진 반복 횟수만큼 값을 갱신 (몇 번 반복할건지가 들어있음.)
+        for i in range(self.iterations):
+            # 종료조건
+            if priorityQueue.isEmpty():
+                break;
+
+            # priorityQueue에서는 가장 변화가 클 것으로 예측되는 상태를 pop함.
+            state = priorityQueue.pop()
+
+            # 다시 또 꺼낸 state에서 QValue를 다시 게산하고 update 시킴
+            if not self.mdp.isTerminal(state):
+                actions = self.mdp.getPossibleActions(state)
+                bestQValue = float('-inf')
+
+                for action in actions:
+                    Q = self.computeQValueFromValues(state, action)
+                    if Q > bestQValue:
+                        bestQValue = Q
+
+                self.values[state] = bestQValue
+
+            # predecessor를 순회해서 Queue에 넣음
+            # 이전 상태들을 업데이트 해줘야함.
+            for predecessor in predecessors:
+                # 종료 조건
+                if self.mdp.isTerminal(predecessor):
+                    continue
+                
+                actions = self.mdp.getPossibleActions(predecessor)
+
+                if not actions:
+                    continue
+
+                bestQValue = float('-inf')
+
+                for action in actions:
+                    Q = self.computeQValueFromValues(predecessor, action)
+                    if Q > bestQValue:
+                        bestQValue = Q
+
+                # 다시 가장 큰 Q-Value를 구하고 theta보다 크면 priorityQueue에 넣음
+                # theta보다 작으면 변화가 거의 없는 것으로 간주하기 때문에 넣지 않아도 된다.
+                diff = abs(self.values[predecessor] - bestQValue)
+                if diff > self.theta:
+                    priorityQueue.update(predecessor, -diff)
+            
