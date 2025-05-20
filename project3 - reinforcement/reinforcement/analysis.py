@@ -60,10 +60,15 @@ def question3e():
     # If not possible, return 'NOT POSSIBLE'
 
 def question8():
-    answerEpsilon = None
-    answerLearningRate = None
+    answerEpsilon = 0
+    answerLearningRate = 0.3
+    if answerEpsilon == 0:
+        return 'NOT POSSIBLE'
+
     return answerEpsilon, answerLearningRate
     # If not possible, return 'NOT POSSIBLE'
+
+    
 
 if __name__ == '__main__':
     print('Answers to analysis questions:')

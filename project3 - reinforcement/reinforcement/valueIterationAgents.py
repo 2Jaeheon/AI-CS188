@@ -231,6 +231,7 @@ class PrioritizedSweepingValueIterationAgent(ValueIterationAgent):
             priorityQueue.update(state, -diff)
 
         # 주어진 반복 횟수만큼 값을 갱신 (몇 번 반복할건지가 들어있음.)
+        # Queue에서 하나를 꺼내서 그걸 토대로 Q-value를 계산해서 value에 저장해줌
         for i in range(self.iterations):
             # 종료조건
             if priorityQueue.isEmpty():
@@ -251,7 +252,9 @@ class PrioritizedSweepingValueIterationAgent(ValueIterationAgent):
 
                 self.values[state] = bestQValue
 
+            
             # predecessor를 순회해서 Queue에 넣음
+            # 즉, 이전 상태들을 모두 순회해서 Queue에 넣는 것.
             # 이전 상태들을 업데이트 해줘야함.
             for predecessor in predecessors:
                 # 종료 조건
